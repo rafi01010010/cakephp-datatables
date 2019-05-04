@@ -4,6 +4,7 @@ namespace App\Controller\Component;
 
 use Cake\Controller\Component;
 use Cake\Controller\ComponentRegistry;
+use Cake\Database\Schema\TableSchema;
 
 /**
  * Paginator component
@@ -30,6 +31,8 @@ class PaginatorComponent extends Component\PaginatorComponent {
     }
 
     public function paginate($object, array $settings = []) {
+
+
         $controller = $this->getController();
         $request = $controller->getRequest();
         if (isset($settings['datatable'])){
@@ -42,7 +45,13 @@ class PaginatorComponent extends Component\PaginatorComponent {
             }
             foreach ($dataTableQuery['columns'] as $c) {
                 if (isset($c['search']['value']) && trim($c['search']['value']) != "") {
-                    $settings['conditions'][$c['data'] . " LIKE"] = "%" . $c['search']['value'] . "%";
+                    if(is_numeric($c['search']['value']) || is_float($c['search']['value'])){
+                        $settings['conditions'][$c['data']] =$c['search']['value'];
+                    }else{
+                        $settings['conditions'][$c['data'] . " LIKE"] = "%" . $c['search']['value'] . "%";
+                    }
+
+
                 }
             }
             if (isset($dataTableQuery['start']) && $dataTableQuery['length']) {
