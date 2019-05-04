@@ -20,6 +20,8 @@ class PaginatorComponent extends Component\PaginatorComponent {
         'maxLimit' => 100,
         'whitelist' => ['limit', 'sort', 'page', 'direction','conditions']
     ];*/
+    public $datatable;
+
 
 
     public function initialize(array $config) {
@@ -28,38 +30,36 @@ class PaginatorComponent extends Component\PaginatorComponent {
     }
 
     public function paginate($object, array $settings = []) {
-        if(isset($settings['datatable'])){
-            $controller = $this->getController();
-            $request = $controller->getRequest();
+        $controller = $this->getController();
+        $request = $controller->getRequest();
+        if (isset($settings['datatable'])){
             $dataTableQuery = $request->getQuery();
-            $request->query = []; // clear all query parameters
-
-            if(isset($dataTableQuery['order'][0]['column'])){
+            //$request->query = []; // clear all query parameters
+            if (isset($dataTableQuery['order'][0]['column'])) {
                 if (isset($dataTableQuery['columns'][$dataTableQuery['order'][0]['column']]['data'])) {
-                    $request->query['sort'] = $dataTableQuery['columns'][$dataTableQuery['order'][0]['column']]['data'];
-                    $request->query['direction'] = $dataTableQuery['order'][0]['dir'];
+                    $settings['order'] = [$dataTableQuery['columns'][$dataTableQuery['order'][0]['column']]['data']=>$dataTableQuery['order'][0]['dir']];
                 }
             }
-            foreach ($dataTableQuery['columns'] as $c){
-                if(isset($c['search']['value']) && trim($c['search']['value']) != ""){
-                    $settings['conditions'][$c['data']. " LIKE"] = "%".$c['search']['value']. "%";
+            foreach ($dataTableQuery['columns'] as $c) {
+                if (isset($c['search']['value']) && trim($c['search']['value']) != "") {
+                    $settings['conditions'][$c['data'] . " LIKE"] = "%" . $c['search']['value'] . "%";
                 }
             }
-            if(isset($dataTableQuery['start']) && $dataTableQuery['length']){
+            if (isset($dataTableQuery['start']) && $dataTableQuery['length']) {
                 $settings['limit'] = $dataTableQuery['length'];
-                if($dataTableQuery['start'] != 0){
-                    $request->query['page'] = intdiv($dataTableQuery['start'],$settings['limit']) + 1;
+                if ($dataTableQuery['start'] != 0) {
+                    $request->withQueryParams(['page'=>intdiv($dataTableQuery['start'], $settings['limit']) + 1]);//($dataTableQuery['start']%$settings['limit']);
                 }
-
             }
         }
         $result = parent::paginate($object, $settings);
-        if(isset($settings['datatable'])){
+        if (isset($settings['datatable'])) {
             $response['data'] = $result;
-            $response['recordsTotal'] = $this->request->param('paging')[$object->getAlias()]['count'];
-            $response['recordsFiltered'] = $this->request->param('paging')[$object->getAlias()]['count'];
+            $response['recordsTotal'] = $this->request->getParam('paging')[$object->getAlias()]['count'];
+            $response['recordsFiltered'] = $this->request->getParam('paging')[$object->getAlias()]['count'];
             return $response;
-        }else{
+
+        } else {
             return $result;
         }
     }
