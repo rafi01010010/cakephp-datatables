@@ -21,7 +21,6 @@ class PaginatorComponent extends Component\PaginatorComponent {
         'maxLimit' => 100,
         'whitelist' => ['limit', 'sort', 'page', 'direction','conditions']
     ];*/
-    public $datatable;
 
 
 
@@ -40,7 +39,11 @@ class PaginatorComponent extends Component\PaginatorComponent {
             //$request->query = []; // clear all query parameters
             if (isset($dataTableQuery['order'][0]['column'])) {
                 if (isset($dataTableQuery['columns'][$dataTableQuery['order'][0]['column']]['data'])) {
-                    $settings['order'] = [$dataTableQuery['columns'][$dataTableQuery['order'][0]['column']]['data']=>$dataTableQuery['order'][0]['dir']];
+                    if(isset($settings['datatable']['sort_exchange'][$dataTableQuery['columns'][$dataTableQuery['order'][0]['column']]['data']])){
+                        $settings['order'] = [$settings['datatable']['sort_exchange'][$dataTableQuery['columns'][$dataTableQuery['order'][0]['column']]['data']]=>$dataTableQuery['order'][0]['dir']];
+                    }else{
+                        $settings['order'] = [$dataTableQuery['columns'][$dataTableQuery['order'][0]['column']]['data']=>$dataTableQuery['order'][0]['dir']];
+                    }
                 }
             }
             foreach ($dataTableQuery['columns'] as $c) {
@@ -57,7 +60,9 @@ class PaginatorComponent extends Component\PaginatorComponent {
             if (isset($dataTableQuery['start']) && $dataTableQuery['length']) {
                 $settings['limit'] = $dataTableQuery['length'];
                 if ($dataTableQuery['start'] != 0) {
-                    $request->withQueryParams(['page'=>intdiv($dataTableQuery['start'], $settings['limit']) + 1]);//($dataTableQuery['start']%$settings['limit']);
+                    $controller->setRequest($request->withQueryParams([
+                        'page' => intdiv($dataTableQuery['start'], $settings['limit']) + 1
+                    ]));
                 }
             }
         }
